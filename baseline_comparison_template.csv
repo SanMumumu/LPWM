@@ -1,0 +1,8 @@
+experiment,flow_method,flow_dataset,flow_root,flow_num_epochs,flow_run_dir,flow_checkpoint,flow_det_ssim,flow_det_psnr,flow_det_lpips,flow_sample_ssim,flow_sample_psnr,flow_sample_lpips,flow_sample_ctx_ssim,flow_sample_ctx_psnr,flow_sample_ctx_lpips,flow_sample_fvd,baseline_method,baseline_source_table,baseline_notes,baseline_det_ssim,baseline_det_psnr,baseline_det_lpips,baseline_sample_ssim,baseline_sample_psnr,baseline_sample_lpips,baseline_sample_ctx_ssim,baseline_sample_ctx_psnr,baseline_sample_ctx_lpips,baseline_sample_fvd,delta_det_ssim,delta_det_psnr,delta_det_lpips,delta_sample_ssim,delta_sample_psnr,delta_sample_lpips,delta_sample_ctx_ssim,delta_sample_ctx_psnr,delta_sample_ctx_lpips,delta_sample_fvd
+Sketchy-U,,sketchy,,,,,,,,,,,,,,,LPWM,,,,,,,,,,,,,,,,,,,,,,
+Sketchy-A,,sketchy,,,,,,,,,,,,,,,LPWM-Action,,,,,,,,,,,,,,,,,,,,,,
+BAIR-U,,bair,,,,,,,,,,,,,,,LPWM,,,,,,,,,,,,,,,,,,,,,,
+Mario-U,,mario,,,,,,,,,,,,,,,LPWM,,,,,,,,,,,,,,,,,,,,,,
+Bridge-L,,bridge,,,,,,,,,,,,,,,LPWM-Language,,,,,,,,,,,,,,,,,,,,,,
+PandaPush,,panda,,,,,,,,,,,,,,,LPWM-Image,,,,,,,,,,,,,,,,,,,,,,
+OGBench-Scene,,ogbench,,,,,,,,,,,,,,,LPWM-Image,,,,,,,,,,,,,,,,,,,,,,
