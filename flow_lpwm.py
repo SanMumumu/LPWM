@@ -330,6 +330,16 @@ class FlowLPWM(DLP):
         self.encoder_module.ctx_enc = self.ctx_module
         self.encoder_module.use_ctx_enc = True
 
+        # The legacy Gaussian prior/posterior heads remain attached to the backbone
+        # for compatibility, but Flow-LPWM v1 never routes loss through them.
+        # Freeze them so DDP does not expect gradients from these unused parameters.
+        for decoder_name in ("posterior_decoder", "prior_decoder"):
+            decoder = getattr(self.ctx_module.backbone, decoder_name, None)
+            context_head = getattr(decoder, "context_head", None) if decoder is not None else None
+            if context_head is not None:
+                for param in context_head.parameters():
+                    param.requires_grad = False
+
         self.dyn_module.context_decoder = self.ctx_module
         self.dyn_module.particle_router = self.particle_router
 
