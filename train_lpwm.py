@@ -29,6 +29,14 @@ torch.backends.cudnn.benchmark = False
 torch.backends.cudnn.deterministic = True
 
 
+def estimate_total_train_steps(start_epoch, num_epochs, warmup_epoch, iter_per_epoch):
+    warmup_steps_per_epoch = min(iter_per_epoch, int(0.8 * iter_per_epoch) + 1)
+    total_steps = 0
+    for epoch in range(start_epoch, num_epochs):
+        total_steps += warmup_steps_per_epoch if epoch < warmup_epoch else iter_per_epoch
+    return total_steps
+
+
 def train_ddlp(config_path='./configs/balls.json'):
     # load config
     try:
@@ -241,6 +249,8 @@ def train_ddlp(config_path='./configs/balls.json'):
     iteration = 0  # initialize iterations counter
     warmup_iteration = 0
     max_warmup_iterations = int(0.8 * iter_per_epoch)
+    total_train_steps = estimate_total_train_steps(start_epoch, num_epochs, warmup_epoch, iter_per_epoch)
+    global_pbar = tqdm(total=total_train_steps, desc='total training', position=0)
 
     for epoch in range(start_epoch, num_epochs):
         model.train()
@@ -258,7 +268,7 @@ def train_ddlp(config_path='./configs/balls.json'):
         batch_active_particles_mean = []
         batch_psnrs = []
 
-        pbar = tqdm(iterable=dataloader)
+        pbar = tqdm(iterable=dataloader, position=1, leave=False)
         for batch in pbar:
             x = batch[0].to(device)
             actions = None if not action_condition else batch[1].to(device)
@@ -361,6 +371,11 @@ def train_ddlp(config_path='./configs/balls.json'):
                              kl_dyn=loss_kl_dyn.data.cpu().item(),
                              a=a_mean.data.cpu().item(), b=b_mean.data.cpu().item(),
                              smu=mu_scale_mean.data.cpu().item())
+            global_pbar.update(1)
+            global_pbar.set_postfix(epoch=f'{epoch + 1}/{num_epochs}',
+                                    loss=f'{loss.data.cpu().item():.4g}',
+                                    rec=f'{loss_rec.data.cpu().item():.4g}',
+                                    kl=f'{loss_kl.data.cpu().item():.4g}')
             if warmup:
                 warmup_iteration += 1
                 if warmup_iteration > max_warmup_iterations:
@@ -389,6 +404,7 @@ def train_ddlp(config_path='./configs/balls.json'):
             lr_str = f'learning rate: {curr_lr}'
             print(curr_lr)
             log_line(log_dir, lr_str)
+        global_pbar.set_description_str(f'total training | epoch {epoch + 1}/{num_epochs}')
 
         # epoch summary
         log_str = format_epoch_summary(
@@ -539,6 +555,7 @@ def train_ddlp(config_path='./configs/balls.json'):
             ]
             save_metrics_data(metrics_data, run_name, save_dir=os.path.join(save_dir, 'metrics'))
             plot_training_metrics(metrics_data, run_name, fig_dir, max_plots_per_figure=4)
+    global_pbar.close()
     return model
 
 
