@@ -141,6 +141,78 @@ LPWM_ACCELERATE_GPUS=0,1,2,3,4,5,6,7 accelerate launch --config_file ./accel_con
 LPWM_ACCELERATE_GPUS=0,1,2,3,4,5,6,7 accelerate launch --config_file ./accel_conf.yml train_lpwm_accelerate.py -d ./configs/ogbench_scene_flow_exp.json
 ```
 
+## Single Experiment Evaluating
+
+After training, replace `RUN_DIR` with the actual experiment directory created by training.
+
+Example:
+
+```bash
+RUN_DIR=./300330_031419_sketchy_flowlpwm_flow_sketchy_u_exp
+```
+
+Use the best LPIPS checkpoint stored under `RUN_DIR/saves/`.
+
+The `t` value below is the dataset training horizon from the paper. The evaluation commands use:
+
+- `-c`: conditioning frames
+- `--horizon`: prediction horizon
+
+### Sketchy-U
+
+Reference setting: `t=20, c=6, p=44`
+
+```bash
+RUN_DIR=./<your_sketchy_u_run_dir>
+python eval/eval_gen_metrics.py -d sketchy -p "${RUN_DIR}" --checkpoint "${RUN_DIR}/saves/sketchy_flowlpwm_flow_sketchy_u_exp_best_lpips.pth" --sample -b 10 -c 6 --horizon 44 --prefix "" --ctx
+python eval/eval_fvd.py -d sketchy -p "${RUN_DIR}" --checkpoint "${RUN_DIR}/saves/sketchy_flowlpwm_flow_sketchy_u_exp_best_lpips.pth" --sample -b 4 -c 6 --horizon 44 --prefix "" --n_videos_per_clip 1
+python generate_lpwm_video_prediction.py -d sketchy -p "${RUN_DIR}" --checkpoint "${RUN_DIR}/saves/sketchy_flowlpwm_flow_sketchy_u_exp_best_lpips.pth" --sample -n 4 -c 6 --horizon 44 --prefix ""
+```
+
+### Sketchy-A
+
+Reference setting: `t=20, c=6, p=44`
+
+```bash
+RUN_DIR=./<your_sketchy_a_run_dir>
+python eval/eval_gen_metrics.py -d sketchy -p "${RUN_DIR}" --checkpoint "${RUN_DIR}/saves/sketchy_flowlpwm_flow_sketchy_a_exp_best_lpips.pth" --sample -b 10 -c 6 --horizon 44 --prefix "" --ctx
+python eval/eval_fvd.py -d sketchy -p "${RUN_DIR}" --checkpoint "${RUN_DIR}/saves/sketchy_flowlpwm_flow_sketchy_a_exp_best_lpips.pth" --sample -b 4 -c 6 --horizon 44 --prefix "" --n_videos_per_clip 1
+python generate_lpwm_video_prediction.py -d sketchy -p "${RUN_DIR}" --checkpoint "${RUN_DIR}/saves/sketchy_flowlpwm_flow_sketchy_a_exp_best_lpips.pth" --sample -n 4 -c 6 --horizon 44 --prefix ""
+```
+
+### BAIR-U
+
+Reference setting: `t=16, c=1, p=15`
+
+```bash
+RUN_DIR=./<your_bair_u_run_dir>
+python eval/eval_gen_metrics.py -d bair -p "${RUN_DIR}" --checkpoint "${RUN_DIR}/saves/bair_flowlpwm_flow_bair_u_exp_best_lpips.pth" --sample -b 10 -c 1 --horizon 15 --prefix "" --ctx
+python eval/eval_fvd.py -d bair -p "${RUN_DIR}" --checkpoint "${RUN_DIR}/saves/bair_flowlpwm_flow_bair_u_exp_best_lpips.pth" --sample -b 4 -c 1 --horizon 15 --prefix "" --n_videos_per_clip 1
+python generate_lpwm_video_prediction.py -d bair -p "${RUN_DIR}" --checkpoint "${RUN_DIR}/saves/bair_flowlpwm_flow_bair_u_exp_best_lpips.pth" --sample -n 4 -c 1 --horizon 15 --prefix ""
+```
+
+### Mario-U
+
+Reference setting: `t=20, c=6, p=34`
+
+```bash
+RUN_DIR=./<your_mario_u_run_dir>
+python eval/eval_gen_metrics.py -d mario -p "${RUN_DIR}" --checkpoint "${RUN_DIR}/saves/mario_flowlpwm_flow_mario_u_exp_best_lpips.pth" --sample -b 10 -c 6 --horizon 34 --prefix "" --ctx
+python eval/eval_fvd.py -d mario -p "${RUN_DIR}" --checkpoint "${RUN_DIR}/saves/mario_flowlpwm_flow_mario_u_exp_best_lpips.pth" --sample -b 4 -c 6 --horizon 34 --prefix "" --n_videos_per_clip 1
+python generate_lpwm_video_prediction.py -d mario -p "${RUN_DIR}" --checkpoint "${RUN_DIR}/saves/mario_flowlpwm_flow_mario_u_exp_best_lpips.pth" --sample -n 4 -c 6 --horizon 34 --prefix ""
+```
+
+### Bridge-L
+
+Reference setting: `t=24, c=1, p=29`
+
+```bash
+RUN_DIR=./<your_bridge_l_run_dir>
+python eval/eval_gen_metrics.py -d bridge -p "${RUN_DIR}" --checkpoint "${RUN_DIR}/saves/bridge_flowlpwm_flow_bridge_l_exp_best_lpips.pth" --sample -b 10 -c 1 --horizon 29 --prefix "" --ctx
+python eval/eval_fvd.py -d bridge -p "${RUN_DIR}" --checkpoint "${RUN_DIR}/saves/bridge_flowlpwm_flow_bridge_l_exp_best_lpips.pth" --sample -b 4 -c 1 --horizon 29 --prefix "" --n_videos_per_clip 1
+python generate_lpwm_video_prediction.py -d bridge -p "${RUN_DIR}" --checkpoint "${RUN_DIR}/saves/bridge_flowlpwm_flow_bridge_l_exp_best_lpips.pth" --sample -n 4 -c 1 --horizon 29 --prefix ""
+```
+
 ## Training Entry Points
 
 Files used for training in this fork:
