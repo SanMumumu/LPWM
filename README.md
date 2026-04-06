@@ -156,61 +156,64 @@ Use the best LPIPS checkpoint stored under `RUN_DIR/saves/`.
 The `t` value below is the dataset training horizon from the paper. The evaluation commands use:
 
 - `-c`: conditioning frames
-- `--horizon`: prediction horizon
+- `--horizon`: final video length
+
+For LPWM evaluation, `--horizon` is the total clip length used by the script, not the future prediction length `p`.
+The generated future length is `--horizon - -c`.
 
 ### Sketchy-U
 
-Reference setting: `t=20, c=6, p=44`
+Reference setting: `t=20, c=6, p=44`, so use `--horizon 50`
 
 ```bash
 RUN_DIR=./<your_sketchy_u_run_dir>
-python eval/eval_gen_metrics.py -d sketchy -p "${RUN_DIR}" --checkpoint "${RUN_DIR}/saves/sketchy_flowlpwm_flow_sketchy_u_exp_best_lpips.pth" --sample -b 10 -c 6 --horizon 44 --prefix "" --ctx
-python eval/eval_fvd.py -d sketchy -p "${RUN_DIR}" --checkpoint "${RUN_DIR}/saves/sketchy_flowlpwm_flow_sketchy_u_exp_best_lpips.pth" --sample -b 4 -c 6 --horizon 44 --prefix "" --n_videos_per_clip 1
-python generate_lpwm_video_prediction.py -d sketchy -p "${RUN_DIR}" --checkpoint "${RUN_DIR}/saves/sketchy_flowlpwm_flow_sketchy_u_exp_best_lpips.pth" --sample -n 4 -c 6 --horizon 44 --prefix ""
+python eval/eval_gen_metrics.py -d sketchy -p "${RUN_DIR}" --checkpoint "${RUN_DIR}/saves/sketchy_flowlpwm_flow_sketchy_u_exp_best_lpips.pth" --sample -b 10 -c 6 --horizon 50 --prefix "" --ctx
+python eval/eval_fvd.py -d sketchy -p "${RUN_DIR}" --checkpoint "${RUN_DIR}/saves/sketchy_flowlpwm_flow_sketchy_u_exp_best_lpips.pth" --sample -b 4 -c 6 --horizon 50 --prefix "" --n_videos_per_clip 1
+python generate_lpwm_video_prediction.py -d sketchy -p "${RUN_DIR}" --checkpoint "${RUN_DIR}/saves/sketchy_flowlpwm_flow_sketchy_u_exp_best_lpips.pth" --sample -n 4 -c 6 --horizon 50 --prefix ""
 ```
 
 ### Sketchy-A
 
-Reference setting: `t=20, c=6, p=44`
+Reference setting: `t=20, c=6, p=44`, so use `--horizon 50`
 
 ```bash
 RUN_DIR=./<your_sketchy_a_run_dir>
-python eval/eval_gen_metrics.py -d sketchy -p "${RUN_DIR}" --checkpoint "${RUN_DIR}/saves/sketchy_flowlpwm_flow_sketchy_a_exp_best_lpips.pth" --sample -b 10 -c 6 --horizon 44 --prefix "" --ctx
-python eval/eval_fvd.py -d sketchy -p "${RUN_DIR}" --checkpoint "${RUN_DIR}/saves/sketchy_flowlpwm_flow_sketchy_a_exp_best_lpips.pth" --sample -b 4 -c 6 --horizon 44 --prefix "" --n_videos_per_clip 1
-python generate_lpwm_video_prediction.py -d sketchy -p "${RUN_DIR}" --checkpoint "${RUN_DIR}/saves/sketchy_flowlpwm_flow_sketchy_a_exp_best_lpips.pth" --sample -n 4 -c 6 --horizon 44 --prefix ""
+python eval/eval_gen_metrics.py -d sketchy -p "${RUN_DIR}" --checkpoint "${RUN_DIR}/saves/sketchy_flowlpwm_flow_sketchy_a_exp_best_lpips.pth" --sample -b 10 -c 6 --horizon 50 --prefix "" --ctx
+python eval/eval_fvd.py -d sketchy -p "${RUN_DIR}" --checkpoint "${RUN_DIR}/saves/sketchy_flowlpwm_flow_sketchy_a_exp_best_lpips.pth" --sample -b 4 -c 6 --horizon 50 --prefix "" --n_videos_per_clip 1
+python generate_lpwm_video_prediction.py -d sketchy -p "${RUN_DIR}" --checkpoint "${RUN_DIR}/saves/sketchy_flowlpwm_flow_sketchy_a_exp_best_lpips.pth" --sample -n 4 -c 6 --horizon 50 --prefix ""
 ```
 
 ### BAIR-U
 
-Reference setting: `t=16, c=1, p=15`
+Reference setting: `t=16, c=1, p=15`, so use `--horizon 16`
 
 ```bash
 RUN_DIR=./<your_bair_u_run_dir>
-python eval/eval_gen_metrics.py -d bair -p "${RUN_DIR}" --checkpoint "${RUN_DIR}/saves/bair_flowlpwm_flow_bair_u_exp_best_lpips.pth" --sample -b 10 -c 1 --horizon 15 --prefix "" --ctx
-python eval/eval_fvd.py -d bair -p "${RUN_DIR}" --checkpoint "${RUN_DIR}/saves/bair_flowlpwm_flow_bair_u_exp_best_lpips.pth" --sample -b 4 -c 1 --horizon 15 --prefix "" --n_videos_per_clip 1
-python generate_lpwm_video_prediction.py -d bair -p "${RUN_DIR}" --checkpoint "${RUN_DIR}/saves/bair_flowlpwm_flow_bair_u_exp_best_lpips.pth" --sample -n 4 -c 1 --horizon 15 --prefix ""
+python eval/eval_gen_metrics.py -d bair -p "${RUN_DIR}" --checkpoint "${RUN_DIR}/saves/bair_flowlpwm_flow_bair_u_exp_best_lpips.pth" --sample -b 10 -c 1 --horizon 16 --prefix "" --ctx
+python eval/eval_fvd.py -d bair -p "${RUN_DIR}" --checkpoint "${RUN_DIR}/saves/bair_flowlpwm_flow_bair_u_exp_best_lpips.pth" --sample -b 4 -c 1 --horizon 16 --prefix "" --n_videos_per_clip 1
+python generate_lpwm_video_prediction.py -d bair -p "${RUN_DIR}" --checkpoint "${RUN_DIR}/saves/bair_flowlpwm_flow_bair_u_exp_best_lpips.pth" --sample -n 4 -c 1 --horizon 16 --prefix ""
 ```
 
 ### Mario-U
 
-Reference setting: `t=20, c=6, p=34`
+Reference setting: `t=20, c=6, p=34`, so use `--horizon 40`
 
 ```bash
 RUN_DIR=./<your_mario_u_run_dir>
-python eval/eval_gen_metrics.py -d mario -p "${RUN_DIR}" --checkpoint "${RUN_DIR}/saves/mario_flowlpwm_flow_mario_u_exp_best_lpips.pth" --sample -b 10 -c 6 --horizon 34 --prefix "" --ctx
-python eval/eval_fvd.py -d mario -p "${RUN_DIR}" --checkpoint "${RUN_DIR}/saves/mario_flowlpwm_flow_mario_u_exp_best_lpips.pth" --sample -b 4 -c 6 --horizon 34 --prefix "" --n_videos_per_clip 1
-python generate_lpwm_video_prediction.py -d mario -p "${RUN_DIR}" --checkpoint "${RUN_DIR}/saves/mario_flowlpwm_flow_mario_u_exp_best_lpips.pth" --sample -n 4 -c 6 --horizon 34 --prefix ""
+python eval/eval_gen_metrics.py -d mario -p "${RUN_DIR}" --checkpoint "${RUN_DIR}/saves/mario_flowlpwm_flow_mario_u_exp_best_lpips.pth" --sample -b 10 -c 6 --horizon 40 --prefix "" --ctx
+python eval/eval_fvd.py -d mario -p "${RUN_DIR}" --checkpoint "${RUN_DIR}/saves/mario_flowlpwm_flow_mario_u_exp_best_lpips.pth" --sample -b 4 -c 6 --horizon 40 --prefix "" --n_videos_per_clip 1
+python generate_lpwm_video_prediction.py -d mario -p "${RUN_DIR}" --checkpoint "${RUN_DIR}/saves/mario_flowlpwm_flow_mario_u_exp_best_lpips.pth" --sample -n 4 -c 6 --horizon 40 --prefix ""
 ```
 
 ### Bridge-L
 
-Reference setting: `t=24, c=1, p=29`
+Reference setting: `t=24, c=1, p=29`, so use `--horizon 30`
 
 ```bash
 RUN_DIR=./<your_bridge_l_run_dir>
-python eval/eval_gen_metrics.py -d bridge -p "${RUN_DIR}" --checkpoint "${RUN_DIR}/saves/bridge_flowlpwm_flow_bridge_l_exp_best_lpips.pth" --sample -b 10 -c 1 --horizon 29 --prefix "" --ctx
-python eval/eval_fvd.py -d bridge -p "${RUN_DIR}" --checkpoint "${RUN_DIR}/saves/bridge_flowlpwm_flow_bridge_l_exp_best_lpips.pth" --sample -b 4 -c 1 --horizon 29 --prefix "" --n_videos_per_clip 1
-python generate_lpwm_video_prediction.py -d bridge -p "${RUN_DIR}" --checkpoint "${RUN_DIR}/saves/bridge_flowlpwm_flow_bridge_l_exp_best_lpips.pth" --sample -n 4 -c 1 --horizon 29 --prefix ""
+python eval/eval_gen_metrics.py -d bridge -p "${RUN_DIR}" --checkpoint "${RUN_DIR}/saves/bridge_flowlpwm_flow_bridge_l_exp_best_lpips.pth" --sample -b 10 -c 1 --horizon 30 --prefix "" --ctx
+python eval/eval_fvd.py -d bridge -p "${RUN_DIR}" --checkpoint "${RUN_DIR}/saves/bridge_flowlpwm_flow_bridge_l_exp_best_lpips.pth" --sample -b 4 -c 1 --horizon 30 --prefix "" --n_videos_per_clip 1
+python generate_lpwm_video_prediction.py -d bridge -p "${RUN_DIR}" --checkpoint "${RUN_DIR}/saves/bridge_flowlpwm_flow_bridge_l_exp_best_lpips.pth" --sample -n 4 -c 1 --horizon 30 --prefix ""
 ```
 
 ## Training Entry Points

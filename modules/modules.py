@@ -6498,6 +6498,7 @@ class DLPDynamics(nn.Module):
             z_score = torch.zeros(z.shape[0], z.shape[1], z.shape[2], 1, dtype=torch.float, device=z.device)
 
         mu_context_posterior = z_context_posterior = z_context  # initialize in case they are needed
+        persistent_active_mask = None
         bs, timestep_horizon, n_particles, _ = z.shape
         for k in range(steps):
             # first generate context, then use the context with the current particles
@@ -6665,11 +6666,13 @@ class DLPDynamics(nn.Module):
                     context_tokens=dense_context_proj,
                     n_views=self.n_views,
                     keep_bg=True,
+                    carry_active_mask=persistent_active_mask,
                 )
                 particle_proj_int = sparse_particles.permute(0, 2, 1, 3)
                 if sparse_context is not None:
                     c = sparse_context.permute(0, 2, 1, 3)
                 self.last_active_particles_mean = route_state['active_particles_mean']
+                persistent_active_mask = route_state.get('active_mask')
             else:
                 self.last_active_particles_mean = None
 

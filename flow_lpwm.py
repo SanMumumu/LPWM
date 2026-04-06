@@ -24,7 +24,7 @@ class SparseParticleRouter(nn.Module):
             )
         return z_obj_on
 
-    def route_tokens(self, tokens, z_obj_on, context_tokens=None, n_views=1, keep_bg=True):
+    def route_tokens(self, tokens, z_obj_on, context_tokens=None, n_views=1, keep_bg=True, carry_active_mask=None):
         if z_obj_on is None:
             particle_pad_mask = torch.ones(tokens.shape[0], tokens.shape[2], dtype=torch.bool, device=tokens.device)
             return tokens, context_tokens, particle_pad_mask, None
@@ -37,6 +37,8 @@ class SparseParticleRouter(nn.Module):
 
         scores = z_obj_on.squeeze(-1).amax(dim=1)
         active_mask = scores > self.threshold
+        if carry_active_mask is not None:
+            active_mask = active_mask | carry_active_mask.to(active_mask.device)
 
         topk = min(self.min_keep, fg_particles)
         fallback_idx = scores.topk(topk, dim=-1).indices
@@ -102,6 +104,7 @@ class SparseParticleRouter(nn.Module):
             "extra_tokens": extra_tokens,
             "indices": gathered_indices,
             "fg_valid_masks": fg_valid_masks,
+            "active_mask": active_mask,
             "active_particles_mean": tokens.new_tensor(active_means).mean(),
         }
         return sparse_tokens, sparse_context, particle_pad_mask, route_state
@@ -135,12 +138,13 @@ class SparseParticleRouter(nn.Module):
 
 
 class FlowContextModule(nn.Module):
-    def __init__(self, backbone, flow_sample_steps=10):
+    def __init__(self, backbone, flow_sample_steps=10, detach_flow_target=False):
         super().__init__()
         self.backbone = backbone
         self.context_dim = backbone.context_dim
         self.hidden_dim = backbone.hidden_dim
         self.flow_sample_steps = max(int(flow_sample_steps), 1)
+        self.detach_flow_target = detach_flow_target
         self.inverse_decoder = ParticleContextDecoder(
             n_particles=backbone.n_kp_enc,
             input_dim=backbone.projection_dim,
@@ -210,6 +214,13 @@ class FlowContextModule(nn.Module):
         )
 
     def compute_flow_loss(self, condition_tokens, z_context_target):
+        # The context prior is a latent-action policy: state at time t should
+        # predict the posterior context/action for transition t -> t + 1.
+        if condition_tokens.shape[1] > 1 and z_context_target.shape[1] > 1:
+            condition_tokens = condition_tokens[:, :-1].contiguous()
+            z_context_target = z_context_target[:, 1:].contiguous()
+        if self.detach_flow_target:
+            z_context_target = z_context_target.detach()
         cond = self.condition_proj(condition_tokens)
         time = torch.rand(*z_context_target.shape[:-1], 1, device=z_context_target.device)
         z_noise = torch.randn_like(z_context_target)
@@ -218,15 +229,23 @@ class FlowContextModule(nn.Module):
         pred_velocity = self.vector_field_net(torch.cat([cond, z_interp, time], dim=-1))
         return F.mse_loss(pred_velocity, target_velocity)
 
-    def sample_policy(self, condition_tokens, steps=None):
+    def sample_policy(self, condition_tokens, steps=None, deterministic=False):
         steps = max(int(steps or self.flow_sample_steps), 1)
         cond = self.condition_proj(condition_tokens)
-        sample = torch.randn(
-            *condition_tokens.shape[:-1],
-            self.context_dim,
-            device=condition_tokens.device,
-            dtype=condition_tokens.dtype,
-        )
+        if deterministic:
+            sample = torch.zeros(
+                *condition_tokens.shape[:-1],
+                self.context_dim,
+                device=condition_tokens.device,
+                dtype=condition_tokens.dtype,
+            )
+        else:
+            sample = torch.randn(
+                *condition_tokens.shape[:-1],
+                self.context_dim,
+                device=condition_tokens.device,
+                dtype=condition_tokens.dtype,
+            )
         dt = 1.0 / steps
         for step in range(steps):
             t_value = step * dt
@@ -284,8 +303,10 @@ class FlowContextModule(nn.Module):
             mu_context = logvar_context = z_context = None
 
         if encode_prior:
-            z_context_dyn = self.sample_policy(condition_tokens)
-            mu_context_dyn = z_context_dyn
+            mu_context_dyn = self.sample_policy(condition_tokens, deterministic=True)
+            z_context_dyn = mu_context_dyn if deterministic else self.sample_policy(
+                condition_tokens, deterministic=False
+            )
             logvar_context_dyn = torch.zeros_like(z_context_dyn)
         else:
             mu_context_dyn = logvar_context_dyn = z_context_dyn = None
@@ -311,7 +332,16 @@ class FlowContextModule(nn.Module):
 
 
 class FlowLPWM(DLP):
-    def __init__(self, beta_flow=1.0, flow_sample_steps=10, router_threshold=0.05, router_min_keep=1, **kwargs):
+    def __init__(
+        self,
+        beta_flow=1.0,
+        flow_sample_steps=10,
+        router_threshold=0.05,
+        router_min_keep=1,
+        use_sparse_router=True,
+        detach_flow_target=False,
+        **kwargs,
+    ):
         super().__init__(**kwargs)
         if self.ctx_pool_mode != "none":
             raise ValueError("FlowLPWM v1 only supports ctx_pool_mode='none'")
@@ -322,11 +352,20 @@ class FlowLPWM(DLP):
 
         self.beta_flow = beta_flow
         self.model_name = "flow_lpwm"
-        self.particle_router = SparseParticleRouter(threshold=router_threshold, min_keep=router_min_keep)
+        self.use_sparse_router = use_sparse_router
+        self.particle_router = (
+            SparseParticleRouter(threshold=router_threshold, min_keep=router_min_keep)
+            if use_sparse_router
+            else None
+        )
 
         old_ctx_module = self.ctx_module
         old_ctx_module.particle_router = self.particle_router
-        self.ctx_module = FlowContextModule(old_ctx_module, flow_sample_steps=flow_sample_steps)
+        self.ctx_module = FlowContextModule(
+            old_ctx_module,
+            flow_sample_steps=flow_sample_steps,
+            detach_flow_target=detach_flow_target,
+        )
         self.encoder_module.ctx_enc = self.ctx_module
         self.encoder_module.use_ctx_enc = True
 

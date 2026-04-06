@@ -54,6 +54,8 @@
   "flow_sample_steps": 10,
   "router_threshold": 0.05,
   "router_min_keep": 1,
+  "use_sparse_router": false,
+  "detach_flow_target": false,
   "dataset_kwargs": {
     "tasks": [
       "C",

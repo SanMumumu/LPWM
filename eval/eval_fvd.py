@@ -28,6 +28,28 @@ def load_dlp_from_config(conf_path, ckpt_path=None):
     return model
 
 
+def disable_sparse_router(model):
+    if hasattr(model, "particle_router"):
+        model.particle_router = None
+    dyn_module = getattr(model, "dyn_module", None)
+    if dyn_module is not None and hasattr(dyn_module, "particle_router"):
+        dyn_module.particle_router = None
+    ctx_module = getattr(model, "ctx_module", None)
+    if ctx_module is not None:
+        backbone = getattr(ctx_module, "backbone", None)
+        if backbone is not None and hasattr(backbone, "particle_router"):
+            backbone.particle_router = None
+        if hasattr(ctx_module, "particle_router"):
+            ctx_module.particle_router = None
+    encoder_module = getattr(model, "encoder_module", None)
+    if encoder_module is not None:
+        ctx_enc = getattr(encoder_module, "ctx_enc", None)
+        backbone = getattr(ctx_enc, "backbone", None) if ctx_enc is not None else None
+        if backbone is not None and hasattr(backbone, "particle_router"):
+            backbone.particle_router = None
+    return model
+
+
 def eval_lpwm_fvd(model, device, config, timestep_horizon=16, val_mode='test', eval_dir='./',
                   cond_steps=1, use_all_ctx=False, batch_size=10, accelerator=None,
                   deterministic=False, n_videos_per_clip=1):
@@ -135,6 +157,8 @@ if __name__ == '__main__':
     parser.add_argument("--prefix", type=str, default='',
                         help="prefix used for model saving")
     parser.add_argument("--n_videos_per_clip", type=int, help="n_videos to generate per data sample", default=1)
+    parser.add_argument("--dense_eval", action='store_true',
+                        help="disable sparse routing during evaluation and use dense rollout")
     args = parser.parse_args()
     # parse input
     dir_path = args.path
@@ -149,6 +173,7 @@ if __name__ == '__main__':
     deterministic = not args.sample
     prefix = args.prefix
     n_videos_per_clip = args.n_videos_per_clip
+    dense_eval = args.dense_eval
     # load model config
     conf_path = os.path.join(dir_path, 'hparams.json')
     with open(conf_path, 'r') as f:
@@ -174,6 +199,9 @@ if __name__ == '__main__':
     print(f'checkpoint path: {ckpt_path}')
 
     model = load_dlp_from_config(conf_path, ckpt_path)
+    if dense_eval:
+        model = disable_sparse_router(model)
+        print("dense_eval: sparse routing disabled for evaluation")
     model = model.to(device)
     model.eval()
 

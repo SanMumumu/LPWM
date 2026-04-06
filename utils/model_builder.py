@@ -115,6 +115,8 @@ def build_model_from_config(config):
             flow_sample_steps=config.get("flow_sample_steps", 10),
             router_threshold=config.get("router_threshold", 0.05),
             router_min_keep=config.get("router_min_keep", 1),
+            use_sparse_router=config.get("use_sparse_router", True),
+            detach_flow_target=config.get("detach_flow_target", False),
         )
 
     raise ValueError(f"Unsupported model_name: {model_name}")
